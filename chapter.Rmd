@@ -1,0 +1,16 @@
+---
+title: "The validity of digital traces of interactions on social media"
+authors: "Joshua Rosenberg, Ashley King, Rita Swartzentruber, Amanda Zeller"
+output: html_document
+date: "2023-05-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Abstract
+
+This chapter explores the validity of digital traces of interactions on social media as a measure of teachers' professional networks. It leverages a unique data set of both teachers’ self-reports (n = 110 respondents) of their professional network, #NGSSchat for science educators, and digital traces of the interactions of teachers (n = ~20,000 tweets) in the same network. The comparison includes the size of the network, centrality measures, and alignment of self-reported interactions. This study offers insights into the use of digital data in studying teachers' social networks and provides practical implications for researchers studying teachers' digital networks.
+
+## Introduction

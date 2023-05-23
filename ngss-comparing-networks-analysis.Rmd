@@ -1,0 +1,73 @@
+---
+title: "ngss-comparing-networks-analysis"
+output: html_document
+date: "2023-05-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## loading packages
+
+```{r}
+library(tidyverse)
+library(igraph)
+```
+
+## Survey
+
+```{r}
+edge <- read_csv("survey-edgelist.csv")
+g <- igraph::graph_from_data_frame(edge)
+
+indegree <- degree(g, mode = "in") %>% 
+  as.data.frame() %>% 
+  tibble::rownames_to_column() %>% 
+  set_names(c("name", "indegree")) %>% 
+  arrange(desc(indegree))
+
+betweenness_degree <- betweenness(g) %>% 
+  as.data.frame() %>% 
+  tibble::rownames_to_column() %>% 
+  set_names(c("name", "betweennessdegree")) %>% 
+  arrange(desc(betweennessdegree))
+
+network_stats_table <- indegree %>% 
+  left_join(betweenness_degree) %>% 
+  as_tibble() %>% 
+  left_join(twit_chars) %>% 
+  mutate(responded = if_else(name %in% edge$sender, TRUE, FALSE)) %>% 
+  select(name, responded, indegree, betweennessdegree, everything()) %>% 
+  distinct(name, .keep_all = TRUE) 
+
+network_out <- network_stats_table %>% 
+  mutate(professional_role = if_else(!responded, "Did not respond", professional_role)) %>% 
+  group_by(professional_role) %>% 
+  summarize(mean_indegree = mean(indegree),
+            median_indegree = median(indegree),
+            n = n()) %>% 
+  arrange(desc(mean_indegree)) %>% 
+  mutate_if(is.numeric, round, 1)
+
+network_out
+
+network_stats_table %>% 
+  select(indegree, betweennessdegree, professional_role) %>% 
+  group_by(professional_role) %>% 
+  summarize_all(list(mean = mean)) %>% 
+  mutate(professional_role = ifelse(is.na(professional_role), "DNR", professional_role)) %>% 
+  filter(professional_role != "") %>% 
+  arrange(desc(indegree_mean))
+
+network_stats_table %>% 
+  select(indegree, betweennessdegree, professional_role) %>% 
+  count(professional_role) %>% 
+  arrange(desc(n))
+```
+
+## Tweets
+
+```{r}
+tweets <- read_csv("ngss-until-2023-01-31.csv")
+```
