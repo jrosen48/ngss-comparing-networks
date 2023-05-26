@@ -68,6 +68,10 @@ network_stats_table %>%
 
 ## Tweets
 
+https://rdrr.io/github/bretsw/tidytags/man/create_edgelist.html
+
 ```{r}
 tweets <- read_csv("ngss-until-2023-01-31.csv")
+
+tweets # 2020 - June, 2020
 ```
