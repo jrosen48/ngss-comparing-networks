@@ -13,11 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 -   What #NGSSchat data?
 -   Comparing which measures?
-    -   Size (n edges, n nodes)
+    -   Size (n edges - , n nodes - 109... **70 ---** twitter data - **2,000**)
+        -   
     -   Mean and spread of centrality measures
-        -   see the correlations
-    -   Cross-coverage of networks for individuals
--   
+        -   see the correlations between the
 
 ## Abstract
 
