@@ -12,10 +12,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Questions for 2023-05-26
 
 -   What #NGSSchat data?
--   Comparing which measures?
-    -   Size (n edges - , n nodes - 109... **70 ---** twitter data - **2,000**)
-        -   
+
+-   
+
+    ## Comparing which measures?
+
+    ```         
+    ## Size (n edges - , n nodes - 109... **70 ---** twitter data - **2,000**)
+    ```
+
     -   Mean and spread of centrality measures
+
         -   see the correlations between the
 
 ## Abstract
