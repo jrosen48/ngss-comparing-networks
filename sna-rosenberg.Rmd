@@ -1,0 +1,45 @@
+---
+title: "SNA Chapter"
+author: "Rita M. Swartzentruber"
+date: "2023-06-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidytags)
+library(tidytext)
+library(igraph)
+library(corrr)
+library(skimr)
+```
+```{r}
+ngss_stats_all <- read_csv( "ngss_stats_combined.csv")
+```
+
+```{r}
+df <- ngss_stats_all %>% 
+  select(indegree_all, betweenness_all, indegree_reply, betweenness_reply, indegree_retweet, betweenness_retweet, indegree_mention, betweenness_mention, indegree_survey, betweenness_survey)
+
+corr_df <- correlate(df)
+# write.csv(corr_df, "corr_df.csv", row.names = FALSE)
+
+corr_df <- rearrange(corr_df, absolute = FALSE)
+corr_df <- shave(corr_df)
+
+rplot(corr_df, shape = 20, color = c("red", "green"), legend = TRUE) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+cor.test(df$betweenness_all, df$betweenness_survey, use = "complete.obs")
+cor.test(df$indegree_all, df$indegree_survey, use = "complete.obs")
+
+ggsave("SNA_corr_plot.png")
+```
+
+```{r}
+skim(ngss_stats_all)
+```

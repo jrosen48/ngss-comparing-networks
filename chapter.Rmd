@@ -9,22 +9,6 @@ date: "2023-05-23"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Questions for 2023-05-26
-
--   What #NGSSchat data?
-
--   
-
-    ## Comparing which measures?
-
-    ```         
-    ## Size (n edges - , n nodes - 109... **70 ---** twitter data - **2,000**)
-    ```
-
-    -   Mean and spread of centrality measures
-
-        -   see the correlations between the
-
 ## Abstract
 
 This chapter explores the validity of digital traces of interactions on social media as a measure of teachers' professional networks. It leverages a unique data set of both teachers' self-reports (n = 109 respondents) of their professional network, #NGSSchat for science educators, and digital traces of the interactions of teachers (n = \~20,000 tweets) in the same network. The comparison includes the size of the network, centrality measures, and alignment of self-reported interactions. This study offers insights into the use of digital data in studying teachers' social networks and provides practical implications for researchers studying teachers' digital networks.
@@ -43,8 +27,6 @@ This chapter explores the validity of digital traces of interactions on social m
 
 *Historical development; assumptions; mechanics (shed light on the black box of the method); What is the state of the art in this approach/method?*
 
-***Zeller - Josh will share some studies***
-
 ### What we know about the validity and reliability of self-reports of networks
 
 ### What we know about the validity and reliability of using digital traces to measure networks
@@ -60,6 +42,8 @@ This chapter explores the validity of digital traces of interactions on social m
 ## Mini Case Study (1000 words)
 
 *Provide a mini-case study that discusses the application of this method*
+
+-   Mean and spread of centrality measures; see the correlations between them
 
 ## Further Reading (500 words)
 

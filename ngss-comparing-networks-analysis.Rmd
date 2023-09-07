@@ -30,5 +30,183 @@ https://rdrr.io/github/bretsw/tidytags/man/create_edgelist.html
 ```{r}
 tweets <- read_csv("ngss-until-2023-01-31.csv")
 
-tweets # 2020 - June, 2020
+tweets_1 <- tweets %>% 
+  filter(lang == "en")
+
+tweets_2020 <-tweets_1 %>%  mutate(year = lubridate::year(created_at)) %>% 
+  filter(year == 2020)
+
+token <- rtweet::create_token(consumer_key = "7eOgJ4CEkvw6i4SDP78c7vhyy",
+                     consumer_secret = "PXFAk7ngjwSiq5IrBU0ENUKt1PUB63JXEW4RbheABV0x0UxGoa",
+                     access_token = "10950512-HfnQc8fDKU1JeVz3bxT5pF7W9fxk8Vtb8ou7ItqBM",
+                     access_secret = "EQjrYhkm1xg7TdVVPx7L8yHo4deLOrQOfmk6lFcpSiJu7"
+                     )
+
+library(tidytags)
+
+five_tweets <- tweets_2020 %>% head()
+
+statuses <- rtweet::lookup_statuses(tweets_2020$status_id)
+
+processed_tweets_2020 <- tidytags::pull_tweet_data(id_vector = statuses$id_str)
+
+processed_tweets_2020$mentions_screen_name <- stringr::str_extract_all(processed_tweets_2020$text, "@\\w+")
+processed_tweets_2020$hashtags <- stringr::str_extract_all(processed_tweets_2020$text, "#\\w+")
+processed_tweets_2020$urls_url <- stringr::str_extract_all(processed_tweets_2020$text, "http[s]?://[^\\s]+")
+
+processed_tweets_2020 <- processed_tweets_2020 %>% 
+  rename(in_reply_to_status_id = reply_to_status_id)
+
+proc_tweets <- function (df) 
+{
+    url_regex_a <- "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|"
+    url_regex_b <- "(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+    url_regex <- paste0(url_regex_a, url_regex_b)
+    hashtag_regex <- "#([0-9]|[a-zA-Z])+"
+    df <- dplyr::mutate(df, word_count = stringr::str_count(.data$text, 
+        "\\s+") + 1, character_count = stringr::str_length(.data$text), 
+        mentions_count = tidytags:::length_with_na(.data$mentions_screen_name), 
+        hashtags_count_api = tidytags:::length_with_na(.data$hashtags), 
+        hashtags_count_regex = stringr::str_count(.data$text, 
+            hashtag_regex), has_hashtags = dplyr::if_else(.data$hashtags_count_regex != 
+            0, TRUE, FALSE), urls_count_api = tidytags:::length_with_na(.data$urls_url), 
+        urls_count_regex = stringr::str_count(.data$text, url_regex), 
+        is_reply = dplyr::if_else(!is.na(.data$in_reply_to_status_id), 
+            TRUE, FALSE), is_self_reply = ifelse(.data$is_reply & 
+            .data$name == .data$in_reply_to_user_id, TRUE, FALSE))
+    df
+}
+```
+
+```{r}
+processed_tweets_2020 <- processed_tweets_2020 %>% 
+  select(-id, -id_str)
+
+users <- users_data(processed_tweets_2020)
+
+users <- users %>% 
+  rename(user_id = id,
+         user_id_str = id_str, 
+         created_at_user = created_at) %>% 
+  select(1:15)
+
+tweet_info_2020 <- bind_cols(processed_tweets_2020, users)
+
+tweet_info_2020_flattened <- flatten(tweet_info_2020)
+
+processed_tweets_2020_processed <- tweet_info_2020
+```
+
+```{r}
+processed_tweets_2020_processed <- processed_tweets_2020_processed %>% 
+  rename(reply_to_screen_name = in_reply_to_screen_name)
+
+processed_tweets_2020_processed <- processed_tweets_2020_processed %>% 
+  rename(reply_to_status_id = in_reply_to_status_id)
+
+processed_tweets_2020_processed <- processed_tweets_2020_processed %>% 
+  rename(reply_to_user_id = in_reply_to_user_id)
+
+processed_tweets_2020_processed <- processed_tweets_2020_processed %>% 
+  mutate(is_retweet = str_detect(text, "^RT @\\w+:"))
+
+processed_tweets_2020_processed <- processed_tweets_2020_processed %>% 
+  mutate(retweet_screen_name = str_extract(text, "RT @(\\w+):"))
+
+processed_tweets_2020_processed <- processed_tweets_2020_processed %>% 
+  rename(is_quote = is_quote_status)
+```
+
+```{r}
+create_edge <- function (df, type = "all")
+{
+    filtered_df <- filter_by_tweet_type(df, type)
+    if (type == "reply") {
+        col_screen_name <- "reply_to_screen_name"
+    }
+    if (type == "retweet") {
+        col_screen_name <- "retweet_screen_name"
+    }
+    # if (type == "quote") {
+    #     col_screen_name <- "quoted_screen_name"
+    # }
+    if (type == "mention") {
+        col_screen_name <- "mentions_screen_name"
+        filtered_df <- tidyr::unnest(filtered_df, !!as.symbol(col_screen_name))
+    }
+    if (type %in% c("reply", "retweet", "mention")) {
+        ifelse(nrow(filtered_df) > 0, el <- dplyr::select(filtered_df, 
+            sender = .data$screen_name, receiver = `$`(.data, 
+                !!as.symbol(col_screen_name))), el <- tibble::tibble(sender = as.character(), 
+            receiver = as.character()))
+        el <- dplyr::mutate(el, edge_type = type)
+    }
+    if (type == "all") {
+        el <- tibble::tibble(sender = as.character(), receiver = as.character(), 
+            edge_type = as.character())
+        el <- rbind(el, create_edge(df, "reply"), 
+            create_edge(df, "retweet"), create_edge(df, "mention"))
+    }
+    el
+}
+
+el <- create_edge(processed_tweets_2020_processed)
+
+el <- el %>% 
+  mutate(receiver = ifelse(edge_type == "retweet", str_sub(receiver, start = 5), receiver))
+
+
+```
+
+```{r}
+el <- el %>% mutate(sender = tolower(sender), receiver = tolower(receiver))
+
+write_csv(el, "2020-ngsschat-edgelist.csv")
+
+g <- igraph::graph_from_data_frame(el)
+
+indegree <- igraph::degree(g, mode = "in")
+betweenness <- igraph::betweenness(g)
+
+# retweet
+g <- igraph::graph_from_data_frame(el %>% filter(edge_type == "retweet"))
+
+rt_indegree <- igraph::degree(g, mode = "in")
+rt_betweenness <- igraph::betweenness(g)
+
+# reply
+g <- igraph::graph_from_data_frame(el %>% filter(edge_type == "reply"))
+
+reply_indegree <- igraph::degree(g, mode = "in")
+reply_betweenness <- igraph::betweenness(g)
+
+# mention
+g <- igraph::graph_from_data_frame(el %>% filter(edge_type == "mention"))
+
+mention_indegree <- igraph::degree(g, mode = "in")
+mention_betweenness <- igraph::betweenness(g)
+```
+
+```{r}
+f <- function(x, my_name) {
+  x <- x %>% 
+  as.data.frame() %>% 
+  rownames_to_column()
+  
+  names(x) <- c("screen_name", my_name)
+  
+  return(as_tibble(x))
+}
+
+indegree_combined <- f(indegree, "combined")
+indegree_retweet <- f(rt_indegree, "retweet")
+indegree_mentions <- f(mention_indegree, "mentions")
+indegree_replies <- f(mention_indegree, "replies")
+
+indegree_combined %>% 
+  left_join(indegree_retweet) %>% 
+  left_join(indegree_mentions) %>% 
+  left_join(indegree_replies) %>% 
+  mutate_all(replace_na, 0) %>% 
+  arrange(desc(combined))
 ```
